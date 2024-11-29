@@ -7,16 +7,7 @@ const parseType = (type) => {
 };
 
 const parseBool = (isFavourite) => {
-  const isString = typeof isFavourite === 'string';
-  if (!isString) return;
-  //false is not filters true value
-  if (isFavourite === 'false') {
-    isFavourite = false;
-    return isFavourite;
-  } else {
-    isFavourite = true;
-    return isFavourite;
-  }
+  return typeof isFavourite === 'string' && isFavourite === 'true';
 };
 
 export const parseFilterParams = (query) => {
