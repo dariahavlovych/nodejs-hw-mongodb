@@ -2,6 +2,7 @@ import express from 'express';
 import {
   registerUserController,
   loginUserController,
+  refreshUserSessionController,
 } from '../controllers/auth.js';
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 import { validateBody } from '../middlewares/validateBody.js';
@@ -23,5 +24,7 @@ router.post(
   validateBody(loginUserSchema),
   ctrlWrapper(loginUserController),
 );
+
+router.post('/refresh', jsonParser, ctrlWrapper(refreshUserSessionController));
 
 export default router;
