@@ -1,9 +1,18 @@
 import bcrypt from 'bcrypt';
 import createHttpError from 'http-errors';
+import jwt from 'jsonwebtoken';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import handlebars from 'handlebars';
 import { randomBytes } from 'crypto';
 import { UsersCollection } from '../db/models/user.js';
-import { FIFTEEN_MINUTES, ONE_MONTH } from '../constants/index.js';
+import {
+  FIFTEEN_MINUTES,
+  ONE_MONTH,
+  TEMPLATES_DIR,
+} from '../constants/index.js';
 import { SessionCollection } from '../db/models/session.js';
+import { sendEmails } from '../utils/sendEmails.js';
 
 export const registerUser = async (payload) => {
   const user = await UsersCollection.findOne({ email: payload.email });
@@ -86,4 +95,86 @@ export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
 
 export const logoutUser = async (sessionId) => {
   await SessionCollection.deleteOne({ _id: sessionId });
+};
+
+export const sendResetToken = async (email) => {
+  const user = await UsersCollection.findOne({ email });
+
+  if (user === null) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  const resetToken = jwt.sign(
+    {
+      sub: user._id,
+      email,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '5m' },
+  );
+
+  const resetPassTemplatePath = path.join(
+    TEMPLATES_DIR,
+    'reset-password-email.html',
+  );
+
+  const templateSource = (await fs.readFile(resetPassTemplatePath)).toString();
+
+  const emailTemplate = handlebars.compile(templateSource);
+
+  const html = emailTemplate({
+    name: user.name,
+    link: `${process.env.APP_DOMAIN}/reset-password?token=${resetToken}`,
+  });
+
+  await sendEmails({
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject: 'Reset your password',
+    html,
+  });
+
+  // try {
+  //   await sendEmails({
+  //     from: process.env.SMTP_FROM,
+  //     to: email,
+  //     subject: 'Reset your password',
+  //     html,
+  //   });
+  // } catch (error) {
+  //   throw createHttpError(
+  //     500,
+  //     'Failed to send the email, please try again later.',
+  //   );
+  // }
+};
+
+export const resetPassword = async (payload) => {
+  let entries;
+  try {
+    entries = jwt.verify(payload.token, process.env.JWT_SECRET);
+  } catch (error) {
+    if (
+      error.name === 'JsonWebTokenError' ||
+      error.name === 'TokenExpiredError'
+    ) {
+      throw createHttpError(401, 'Token is expired or invalid.');
+    }
+  }
+
+  const user = await UsersCollection.findOne({
+    email: entries.email,
+    _id: entries.sub,
+  });
+
+  if (user === null) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  const encryptedPass = await bcrypt.hash(payload.password, 10);
+
+  await UsersCollection.findOneAndUpdate(
+    { _id: user._id },
+    { password: encryptedPass },
+  );
 };
