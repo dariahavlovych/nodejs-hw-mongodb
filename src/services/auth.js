@@ -127,7 +127,6 @@ export const sendResetToken = async (email) => {
     link: `${process.env.APP_DOMAIN}/auth/reset-password?token=${resetToken}`,
   });
 
-
   try {
     await sendEmails({
       from: process.env.SMTP_FROM,
@@ -164,6 +163,8 @@ export const resetPassword = async (payload) => {
   if (user === null) {
     throw createHttpError(404, 'User not found');
   }
+
+  await SessionCollection.deleteOne({ userId: user._id });
 
   const encryptedPass = await bcrypt.hash(payload.password, 10);
 
