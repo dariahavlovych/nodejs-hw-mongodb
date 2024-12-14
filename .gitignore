@@ -1,7 +1,10 @@
 /node_modules
+/uploads/*
+/temp/*
 
 .env
 
 .vscode
 .DS_Store
 .idea
+
