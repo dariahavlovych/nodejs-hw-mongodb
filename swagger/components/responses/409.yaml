@@ -1,0 +1,19 @@
+description: User with such email already exists
+content:
+  application/json:
+    schema:
+      type: object
+      required:
+        - status
+        - message
+        - data
+      properties:
+        status:
+          type: integer
+          example: 409
+        message:
+          type: string
+          example: Email in use
+        data:
+          type: object
+          example: {}
