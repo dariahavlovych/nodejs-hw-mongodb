@@ -13,6 +13,7 @@ import {
 } from '../constants/index.js';
 import { SessionCollection } from '../db/models/session.js';
 import { sendEmails } from '../utils/sendEmails.js';
+import { validateCode } from '../utils/googleOAuth2.js';
 
 export const registerUser = async (payload) => {
   const user = await UsersCollection.findOne({ email: payload.email });
@@ -172,4 +173,27 @@ export const resetPassword = async (payload) => {
     { _id: user._id },
     { password: encryptedPass },
   );
+};
+
+export const loginOrSignupWithGoogle = async (code) => {
+  const loginTicket = await validateCode(code);
+  const payload = loginTicket.getPayload();
+  if (!payload) throw createHttpError(401, 'Unauthorized');
+
+  let user = await UsersCollection.findOne({ email: payload.email });
+
+  if (!user) {
+    const password = await bcrypt.hash(randomBytes(30).toString('base64'), 10);
+    user = await UsersCollection.create({
+      name: payload.name,
+      email: payload.email,
+      password,
+    });
+  }
+
+  const session = createSession();
+
+  await SessionCollection.deleteOne({ userId: user._id });
+
+  return await SessionCollection.create({ userId: user._id, ...session });
 };
