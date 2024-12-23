@@ -16,3 +16,7 @@ properties:
     description: "User's email"
     type: string
     example: 'test.mail@mail.com'
+  password:
+    description: "User's password. From 8 to 30 characters"
+    type: string
+    example: 'mOOr4yxq3hT7rkpTLg9DYzf9IHDRV'

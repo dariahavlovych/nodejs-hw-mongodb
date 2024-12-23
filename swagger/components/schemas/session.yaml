@@ -1,0 +1,28 @@
+type: object
+required:
+  - userId
+  - accessToken
+  - refreshToken
+  - accessTokenValidUntil
+  - refreshTokenValidUntil
+properties:
+  userId:
+    description: "User's id"
+    type: string
+    example: 65e4decdd286b30065d54af9
+  accessToken:
+    description: 'token for auth'
+    type: string
+    example: 'kfkcNyYdP7vnxxxoGtoROZniMLrNG6tbImgufkb7'
+  refreshToken:
+    description: 'token for authtoken refresh'
+    type: string
+    example: 'kfkcNyYdP7vnxxxoGtoROZniMLrNG6tbImgufkb7'
+  accessTokenValidUntil:
+    description: 'date till access token will be valid (15 min)'
+    type: date
+    example: '2024-12-21T12:35:22.675+00:00'
+  refreshTokenValidUntil:
+    description: 'date till refresh token will be valid (30 days)'
+    type: date
+    example: '2024-12-21T12:35:22.675+00:00'
